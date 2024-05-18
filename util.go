@@ -1,11 +1,12 @@
 package main
 
 import (
+	"image"
 	"os"
 	"path/filepath"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/nfnt/resize"
 )
 
 func AdjustSize(img *ebiten.Image, divX int, divY int) *ebiten.DrawImageOptions {
@@ -29,8 +30,12 @@ func LoadImgs() []*ebiten.Image {
 	for _, file := range files {
 		if !file.IsDir() {
 			filePath := filepath.Join(PATH, file.Name())
-			img, _, _ := ebitenutil.NewImageFromFile(filePath)
-			images = append(images, img)
+			openedFile, _ := os.Open(filePath)
+			img, _, _ := image.Decode(openedFile)
+			resizedImg := resize.Resize(128, 128, img, resize.Lanczos3)
+			ebitenImg := ebiten.NewImageFromImage(resizedImg)
+
+			images = append(images, ebitenImg)
 		}
 	}
 	return images

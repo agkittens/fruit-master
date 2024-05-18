@@ -37,7 +37,7 @@ func (g *Game) DefineParams() {
 	g.fruits = make([]*Fruit, g.amount)
 
 	for i := 0; i < g.amount; i++ {
-		randomIdx := rand.Intn(16)
+		randomIdx := rand.Intn(30)
 		g.fruits[i] = &Fruit{
 			x:     rand.Intn(WIDTH-100) + 10,
 			y:     HEIGHT + 10,
@@ -58,8 +58,7 @@ func (g *Game) Update() {
 		} else if fruit.y < (HEIGHT+10) && fruit.state == "down" {
 			fruit.MoveDown()
 		} else if fruit.y >= (HEIGHT+10) && fruit.state == "down" {
-			fruit.state = "up"
-
+			g.ChangeParams(fruit)
 		}
 	}
 }
@@ -69,4 +68,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		op := ChangePos(fruit.x, fruit.y)
 		screen.DrawImage(fruit.image, op)
 	}
+}
+
+func (g *Game) ChangeParams(fruit *Fruit) {
+	randomIdx := rand.Intn(30)
+	fruit.x = rand.Intn(WIDTH-100) + 10
+	fruit.y = HEIGHT + 10
+	fruit.image = g.fruitsImg[randomIdx]
+	fruit.v0 = float64(rand.Intn(4) + 1)
+	fruit.hMax = float64(rand.Intn(HEIGHT-200) + 100)
+	fruit.state = "up"
+
 }
