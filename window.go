@@ -5,36 +5,88 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
-type Game struct {
+var currentState int
+
+type Window struct {
 	background *ebiten.Image
 	title      *ebiten.Image
+	buttons    []*Button
 }
 
-func (g *Game) Init() {
-	g.background, _, _ = ebitenutil.NewImageFromFile(BG)
-	g.title, _, _ = ebitenutil.NewImageFromFile(TITLE)
+func (w *Window) Init() {
+	w.background, _, _ = ebitenutil.NewImageFromFile(BG)
+	w.title, _, _ = ebitenutil.NewImageFromFile(TITLE)
+
+	buttonStart := &Button{
+		x:      (WIDTH - 200) / 2,
+		y:      (HEIGHT + 150) / 2,
+		width:  200,
+		height: 50,
+		text:   "start",
+		onClick: func() {
+			currentState = StateGame
+			w.background, _, _ = ebitenutil.NewImageFromFile(GAME)
+		},
+	}
+
+	buttonExit := &Button{
+		x:      (WIDTH - 200) / 2,
+		y:      (HEIGHT + 300) / 2,
+		width:  200,
+		height: 50,
+		text:   "exit",
+		onClick: func() {
+			currentState = StateExit
+		},
+	}
+
+	buttonX := &Button{
+		x:      (WIDTH - 50),
+		y:      20,
+		width:  30,
+		height: 30,
+		text:   "X",
+		onClick: func() {
+			currentState = StateMenu
+			w.background, _, _ = ebitenutil.NewImageFromFile(BG)
+		},
+	}
+
+	w.buttons = []*Button{buttonStart, buttonExit, buttonX}
+
 }
 
-func (g *Game) Update() error {
+func (w *Window) Update() error {
+	switch currentState {
+	case StateMenu:
+		w.buttons[0].Update()
+		w.buttons[1].Update()
+	case StateGame:
+		w.buttons[2].Update()
+	case StateExit:
+		return ebiten.Termination
+	}
 	return nil
 }
 
-func (g *Game) Draw(screen *ebiten.Image) {
-	opBG := g.AdjustSize(g.background, 2, 2)
-	opTT := g.AdjustSize(g.title, 2, 3)
-	screen.DrawImage(g.background, opBG)
-	screen.DrawImage(g.title, opTT)
+func (w *Window) Draw(screen *ebiten.Image) {
+	switch currentState {
+	case StateMenu:
+		opBG := AdjustSize(w.background, 2, 2)
+		opTT := AdjustSize(w.title, 2, 3)
+		screen.DrawImage(w.background, opBG)
+		screen.DrawImage(w.title, opTT)
+		w.buttons[0].Draw(screen)
+		w.buttons[1].Draw(screen)
+
+	case StateGame:
+		opBG := AdjustSize(w.background, 2, 2)
+		screen.DrawImage(w.background, opBG)
+		w.buttons[2].Draw(screen)
+	}
+
 }
 
-func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+func (w *Window) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return WIDTH, HEIGHT
-}
-
-func (g *Game) AdjustSize(img *ebiten.Image, divX int, divY int) *ebiten.DrawImageOptions {
-	size := img.Bounds().Size()
-	posX := (WIDTH - size.X) / divX
-	posY := (HEIGHT - size.Y) / divY
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(posX), float64(posY))
-	return op
 }

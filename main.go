@@ -13,7 +13,7 @@ func main() {
 	ebiten.SetWindowTitle("Fruit master")
 	ebiten.SetTPS(TPS)
 
-	window := Game{}
+	window := Window{}
 	window.Init()
 
 	if err := ebiten.RunGame(&window); err != nil {
