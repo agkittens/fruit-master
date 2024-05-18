@@ -1,6 +1,8 @@
 package main
 
 import (
+	_ "image/png"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
@@ -10,10 +12,14 @@ var currentState int
 type Window struct {
 	background *ebiten.Image
 	title      *ebiten.Image
+	gameplay   *Game
 	buttons    []*Button
 }
 
 func (w *Window) Init() {
+	w.gameplay = &Game{}
+	w.gameplay.DefineParams()
+
 	w.background, _, _ = ebitenutil.NewImageFromFile(BG)
 	w.title, _, _ = ebitenutil.NewImageFromFile(TITLE)
 
@@ -63,6 +69,7 @@ func (w *Window) Update() error {
 		w.buttons[1].Update()
 	case StateGame:
 		w.buttons[2].Update()
+		w.gameplay.Update()
 	case StateExit:
 		return ebiten.Termination
 	}
@@ -83,6 +90,7 @@ func (w *Window) Draw(screen *ebiten.Image) {
 		opBG := AdjustSize(w.background, 2, 2)
 		screen.DrawImage(w.background, opBG)
 		w.buttons[2].Draw(screen)
+		w.gameplay.Draw(screen)
 	}
 
 }

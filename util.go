@@ -10,3 +10,9 @@ func AdjustSize(img *ebiten.Image, divX int, divY int) *ebiten.DrawImageOptions 
 	op.GeoM.Translate(float64(posX), float64(posY))
 	return op
 }
+
+func ChangePos(posX, posY int) *ebiten.DrawImageOptions {
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(posX), float64(posY))
+	return op
+}

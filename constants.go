@@ -16,3 +16,6 @@ const (
 	StateGame
 	StateExit
 )
+
+// fruits
+const FB = "assets/fruits/banana.png"
