@@ -18,4 +18,4 @@ const (
 )
 
 // fruits
-const FB = "assets/fruits/banana.png"
+const PATH = "assets/fruits/"

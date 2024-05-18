@@ -1,54 +1,72 @@
 package main
 
 import (
-	"fmt"
 	_ "image/png"
 	"math"
 	"math/rand"
 
 	"github.com/hajimehoshi/ebiten/v2"
-
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
+type Fruit struct {
+	x, y     int
+	image    *ebiten.Image
+	v0, hMax float64
+	state    string
+}
+
+func (f *Fruit) MoveUp() {
+	s := math.Sqrt(f.hMax+float64(f.y))/2 + f.v0
+	f.y -= int(s)
+}
+
+func (f *Fruit) MoveDown() {
+	s := math.Sqrt(f.hMax+float64(f.y)) / 4
+	f.y += int(s)
+}
+
 type Game struct {
-	x, y        int
-	fruitsImg   *ebiten.Image
-	v0, g, hMax float64
-	state       string
+	fruits    []*Fruit
+	fruitsImg []*ebiten.Image
+	amount    int
 }
 
 func (g *Game) DefineParams() {
-	g.fruitsImg, _, _ = ebitenutil.NewImageFromFile(FB)
-	g.x = rand.Intn(WIDTH-10) + 10
-	g.y = HEIGHT + 10
-	g.v0 = float64(rand.Intn(4) + 1)
-	g.g = 9.81
-	g.hMax = float64(rand.Intn(HEIGHT-200) + 100)
-	fmt.Print(g.hMax, g.v0, g.y)
-	g.state = "up"
+	g.fruitsImg = LoadImgs()
+	g.amount = 10
+	g.fruits = make([]*Fruit, g.amount)
+
+	for i := 0; i < g.amount; i++ {
+		randomIdx := rand.Intn(16)
+		g.fruits[i] = &Fruit{
+			x:     rand.Intn(WIDTH-100) + 10,
+			y:     HEIGHT + 10,
+			image: g.fruitsImg[randomIdx],
+			v0:    float64(rand.Intn(4) + 1),
+			hMax:  float64(rand.Intn(HEIGHT-200) + 100),
+			state: "up",
+		}
+	}
 }
 
 func (g *Game) Update() {
-	if g.y > int(g.hMax) && g.state == "up" {
-		g.MoveUp()
-	} else if g.y <= int(g.hMax) && g.state == "up" {
-		g.state = "down"
-	} else {
-		g.MoveDown()
+	for _, fruit := range g.fruits {
+		if fruit.y > int(fruit.hMax) && fruit.state == "up" {
+			fruit.MoveUp()
+		} else if fruit.y <= int(fruit.hMax) && fruit.state == "up" {
+			fruit.state = "down"
+		} else if fruit.y < (HEIGHT+10) && fruit.state == "down" {
+			fruit.MoveDown()
+		} else if fruit.y >= (HEIGHT+10) && fruit.state == "down" {
+			fruit.state = "up"
+
+		}
 	}
 }
+
 func (g *Game) Draw(screen *ebiten.Image) {
-	op := ChangePos(g.x, g.y)
-	screen.DrawImage(g.fruitsImg, op)
-}
-
-func (g *Game) MoveUp() {
-	s := math.Sqrt((g.hMax + float64(g.y))) / 2
-	g.y -= int(s)
-}
-
-func (g *Game) MoveDown() {
-	s := math.Sqrt((g.hMax + float64(g.y))) / 4
-	g.y += int(s)
+	for _, fruit := range g.fruits {
+		op := ChangePos(fruit.x, fruit.y)
+		screen.DrawImage(fruit.image, op)
+	}
 }
