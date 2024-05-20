@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "image/png"
+	"log"
 	"math"
 	"math/rand"
 
@@ -13,6 +14,7 @@ type Fruit struct {
 	image    *ebiten.Image
 	v0, hMax float64
 	state    string
+	// onClick  func()
 }
 
 func (f *Fruit) MoveUp() {
@@ -25,32 +27,39 @@ func (f *Fruit) MoveDown() {
 	f.y += int(s)
 }
 
+func (f *Fruit) SmashFruit() bool {
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		posX, posY := ebiten.CursorPosition()
+
+		if (posX >= f.x && posX <= f.x+f.image.Bounds().Dx()) && (posY >= f.y && posY <= f.y+f.image.Bounds().Dy()) {
+			// f.onClick()
+			return true
+		}
+	}
+	return false
+}
+
 type Game struct {
 	fruits    []*Fruit
 	fruitsImg []*ebiten.Image
 	amount    int
+	count     int
 }
 
 func (g *Game) DefineParams() {
 	g.fruitsImg = LoadImgs()
 	g.amount = 10
 	g.fruits = make([]*Fruit, g.amount)
+	g.count = 0
 
 	for i := 0; i < g.amount; i++ {
-		randomIdx := rand.Intn(30)
-		g.fruits[i] = &Fruit{
-			x:     rand.Intn(WIDTH-100) + 10,
-			y:     HEIGHT + 10,
-			image: g.fruitsImg[randomIdx],
-			v0:    float64(rand.Intn(4) + 1),
-			hMax:  float64(rand.Intn(HEIGHT-200) + 100),
-			state: "up",
-		}
+		g.fruits[i] = g.CreateFruit()
 	}
 }
 
 func (g *Game) Update() {
-	for _, fruit := range g.fruits {
+	for i := 0; i < len(g.fruits); i++ {
+		fruit := g.fruits[i]
 		if fruit.y > int(fruit.hMax) && fruit.state == "up" {
 			fruit.MoveUp()
 		} else if fruit.y <= int(fruit.hMax) && fruit.state == "up" {
@@ -59,6 +68,13 @@ func (g *Game) Update() {
 			fruit.MoveDown()
 		} else if fruit.y >= (HEIGHT+10) && fruit.state == "down" {
 			g.ChangeParams(fruit)
+		}
+
+		if fruit.SmashFruit() {
+			g.count += 1
+			log.Println("smash count", g.count)
+			g.fruits = append(g.fruits[:i], g.fruits[i+1:]...)
+			g.fruits = append(g.fruits, g.CreateFruit())
 		}
 	}
 }
@@ -79,4 +95,17 @@ func (g *Game) ChangeParams(fruit *Fruit) {
 	fruit.hMax = float64(rand.Intn(HEIGHT-200) + 100)
 	fruit.state = "up"
 
+}
+
+func (g *Game) CreateFruit() *Fruit {
+	randomIdx := rand.Intn(30)
+	fruit := &Fruit{
+		x:     rand.Intn(WIDTH-100) + 10,
+		y:     HEIGHT + 10,
+		image: g.fruitsImg[randomIdx],
+		v0:    float64(rand.Intn(4) + 1),
+		hMax:  float64(rand.Intn(HEIGHT-200) + 100),
+		state: "up",
+	}
+	return fruit
 }
