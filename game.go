@@ -14,7 +14,7 @@ type FlyingObj struct {
 	image           *ebiten.Image
 	v0, hMax, theta float64
 	state           string
-	sX, sYU, sYD    float64
+	sX, sY          float64
 	slowFactor      float64
 }
 
@@ -24,26 +24,24 @@ func (f *FlyingObj) DefineConsts() {
 		side = -1.0
 	}
 	f.sX = side * f.v0 * math.Cos(f.theta)
-	f.sYU = math.Sqrt(f.hMax+float64(f.y))/2 + f.v0*math.Sin(f.theta)
-	f.sYD = math.Sqrt(f.hMax+float64(f.y))/3 + f.v0*math.Sin(f.theta)
+	f.sY = math.Sqrt(f.hMax+float64(f.y))/3 + f.v0*math.Sin(f.theta)
 }
 func (f *FlyingObj) MoveUp() {
-	f.slowFactor = 1.0 - float64(f.y)/float64(HEIGHT-50)
+	f.AdjustSlowFactor()
 
-	if f.slowFactor < 0.1 {
-		f.slowFactor = 0.1
-	}
 	f.x -= int(f.sX)
-	f.y -= (int(f.sYU)*int(f.slowFactor) + int(f.y/100))
+	f.y -= int((f.sY)*(f.slowFactor) + float64(f.y/100))
+
+	if f.y <= int(f.hMax) {
+		f.state = "down"
+	}
 }
 
 func (f *FlyingObj) MoveDown() {
-	f.slowFactor = 1.0 - float64(f.y)/float64(HEIGHT-50)
-	if f.slowFactor < 0.1 {
-		f.slowFactor = 0.1
-	}
+	f.AdjustSlowFactor()
+
 	f.x -= int(f.sX)
-	f.y += (int(f.sYD)*int(f.slowFactor) + int(f.y/100))
+	f.y += int((f.sY)*(f.slowFactor) + float64(f.y/100))
 }
 
 func (f *FlyingObj) SmashObj() bool {
@@ -57,17 +55,30 @@ func (f *FlyingObj) SmashObj() bool {
 	return false
 }
 
-func (f *FlyingObj) Movement() bool {
-	if f.y > int(f.hMax) && f.state == "up" {
+func (f *FlyingObj) AdjustSlowFactor() {
+	f.slowFactor = float64(f.y)/float64(f.hMax) - 1.0
+	if f.slowFactor < 0.01 {
+		f.slowFactor = 0.01
+	} else if f.slowFactor > 0.99 {
+		f.slowFactor = 0.99
+	}
+}
+
+func (f *FlyingObj) Movement() {
+	switch f.state {
+	case "up":
 		f.MoveUp()
-	} else if f.y <= int(f.hMax) && f.state == "up" {
-		f.state = "down"
-	} else if f.y < (HEIGHT+10) && f.state == "down" {
+	case "down":
 		f.MoveDown()
-	} else if f.y >= (HEIGHT+10) && f.state == "down" {
+	}
+}
+
+func (f *FlyingObj) CheckPos() bool {
+	if f.y >= (HEIGHT+10) && f.state == "down" {
 		return true
 	}
 	return false
+
 }
 
 type Game struct {
@@ -105,12 +116,13 @@ func (g *Game) DefineParams() {
 func (g *Game) Update() {
 	for i := 0; i < len(g.fruits); i++ {
 		fruit := g.fruits[i]
-		changeStatus := fruit.Movement()
-
-		if fruit.SmashObj() || changeStatus {
+		fruit.Movement()
+		isFallen := fruit.CheckPos()
+		isSmashed := fruit.SmashObj()
+		if isSmashed || isFallen {
 			g.fruits = append(g.fruits[:i], g.fruits[i+1:]...)
 			g.fruits = append(g.fruits, g.CreateFruit())
-			if fruit.SmashObj() {
+			if isSmashed {
 				g.count += 1
 			}
 		}
