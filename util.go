@@ -24,12 +24,12 @@ func ChangePos(posX, posY int) *ebiten.DrawImageOptions {
 	return op
 }
 
-func LoadImgs() []*ebiten.Image {
-	files, _ := os.ReadDir(PATH)
+func LoadImgs(path string) []*ebiten.Image {
+	files, _ := os.ReadDir(path)
 	var images []*ebiten.Image
 	for _, file := range files {
 		if !file.IsDir() {
-			filePath := filepath.Join(PATH, file.Name())
+			filePath := filepath.Join(path, file.Name())
 			openedFile, _ := os.Open(filePath)
 			img, _, _ := image.Decode(openedFile)
 			resizedImg := resize.Resize(128, 128, img, resize.Lanczos3)

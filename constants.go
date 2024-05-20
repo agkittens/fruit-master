@@ -18,4 +18,5 @@ const (
 )
 
 // fruits
-const PATH = "assets/fruitsv2/"
+const PATH_F = "assets/fruitsv2/"
+const PATH_B = "assets/bomb/"
