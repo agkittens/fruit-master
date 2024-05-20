@@ -1,13 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"image/color"
 	"log"
 
+	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"github.com/hajimehoshi/ebiten/v2/text"
-	"golang.org/x/image/font/basicfont"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
 type Button struct {
@@ -28,14 +29,23 @@ func (b *Button) Update() {
 }
 
 func (b *Button) Draw(screen *ebiten.Image) {
+
 	color := color.RGBA{R: R, G: G, B: B, A: 255}
 	ebitenutil.DrawRect(screen, float64(b.x), float64(b.y), float64(b.width), float64(b.height), color)
 
-	textWidth := text.BoundString(basicfont.Face7x13, b.text).Dx()
-	textHeight := text.BoundString(basicfont.Face7x13, b.text).Dy()
+	textX := b.x + (b.width-12*len(b.text))/2
+	textY := b.y + (b.height-30)/2
+	DisplayText(textX, textY, 24, b.text, screen)
+}
 
-	textX := b.x + (b.width-textWidth)/2
-	textY := b.y + (b.height-textHeight)/2
+func DisplayText(x, y, size int, msg string, screen *ebiten.Image) {
+	mplusFaceSource, _ := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
+	op := &text.DrawOptions{}
+	op.GeoM.Translate(float64(x), float64(y))
+	op.ColorScale.ScaleWithColor(color.White)
 
-	ebitenutil.DebugPrintAt(screen, b.text, textX, textY)
+	text.Draw(screen, msg, &text.GoTextFace{
+		Source: mplusFaceSource,
+		Size:   float64(size),
+	}, op)
 }

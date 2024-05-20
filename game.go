@@ -2,9 +2,9 @@ package main
 
 import (
 	_ "image/png"
-	"log"
 	"math"
 	"math/rand"
+	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -14,11 +14,10 @@ type Fruit struct {
 	image    *ebiten.Image
 	v0, hMax float64
 	state    string
-	// onClick  func()
 }
 
 func (f *Fruit) MoveUp() {
-	s := math.Sqrt(f.hMax+float64(f.y))/2 + f.v0
+	s := math.Sqrt(f.hMax+float64(f.y))/3 + f.v0
 	f.y -= int(s)
 }
 
@@ -32,7 +31,6 @@ func (f *Fruit) SmashFruit() bool {
 		posX, posY := ebiten.CursorPosition()
 
 		if (posX >= f.x && posX <= f.x+f.image.Bounds().Dx()) && (posY >= f.y && posY <= f.y+f.image.Bounds().Dy()) {
-			// f.onClick()
 			return true
 		}
 	}
@@ -72,7 +70,6 @@ func (g *Game) Update() {
 
 		if fruit.SmashFruit() {
 			g.count += 1
-			log.Println("smash count", g.count)
 			g.fruits = append(g.fruits[:i], g.fruits[i+1:]...)
 			g.fruits = append(g.fruits, g.CreateFruit())
 		}
@@ -84,6 +81,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		op := ChangePos(fruit.x, fruit.y)
 		screen.DrawImage(fruit.image, op)
 	}
+	op := ChangePos(-10, -10)
+	screen.DrawImage(g.fruitsImg[31], op)
+	DisplayText(110, 30, 42, strconv.Itoa(g.count), screen)
 }
 
 func (g *Game) ChangeParams(fruit *Fruit) {
