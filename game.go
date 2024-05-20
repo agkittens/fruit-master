@@ -10,20 +10,40 @@ import (
 )
 
 type FlyingObj struct {
-	x, y     int
-	image    *ebiten.Image
-	v0, hMax float64
-	state    string
+	x, y            int
+	image           *ebiten.Image
+	v0, hMax, theta float64
+	state           string
+	sX, sYU, sYD    float64
+	slowFactor      float64
 }
 
+func (f *FlyingObj) DefineConsts() {
+	side := 1.0
+	if rand.Intn(2) == 0 {
+		side = -1.0
+	}
+	f.sX = side * f.v0 * math.Cos(f.theta)
+	f.sYU = math.Sqrt(f.hMax+float64(f.y))/2 + f.v0*math.Sin(f.theta)
+	f.sYD = math.Sqrt(f.hMax+float64(f.y))/3 + f.v0*math.Sin(f.theta)
+}
 func (f *FlyingObj) MoveUp() {
-	s := math.Sqrt(f.hMax+float64(f.y))/3 + f.v0
-	f.y -= int(s)
+	f.slowFactor = 1.0 - float64(f.y)/float64(HEIGHT-50)
+
+	if f.slowFactor < 0.1 {
+		f.slowFactor = 0.1
+	}
+	f.x -= int(f.sX)
+	f.y -= (int(f.sYU)*int(f.slowFactor) + int(f.y/100))
 }
 
 func (f *FlyingObj) MoveDown() {
-	s := math.Sqrt(f.hMax+float64(f.y)) / 4
-	f.y += int(s)
+	f.slowFactor = 1.0 - float64(f.y)/float64(HEIGHT-50)
+	if f.slowFactor < 0.1 {
+		f.slowFactor = 0.1
+	}
+	f.x -= int(f.sX)
+	f.y += (int(f.sYD)*int(f.slowFactor) + int(f.y/100))
 }
 
 func (f *FlyingObj) SmashObj() bool {
@@ -46,21 +66,9 @@ func (f *FlyingObj) Movement() bool {
 		f.MoveDown()
 	} else if f.y >= (HEIGHT+10) && f.state == "down" {
 		return true
-		// f.ChangeParams()
 	}
 	return false
 }
-
-// func (f *FlyingObj) ChangeParams() {
-// 	randomIdx := rand.Intn(30)
-// 	f.x = rand.Intn(WIDTH-100) + 10
-// 	f.y = HEIGHT + 10
-// 	f.image = g.fruitsImg[randomIdx]
-// 	f.v0 = float64(rand.Intn(4) + 1)
-// 	f.hMax = float64(rand.Intn(HEIGHT-200) + 100)
-// 	f.state = "up"
-
-// }
 
 type Game struct {
 	fruits    []*FlyingObj
@@ -74,7 +82,7 @@ type Game struct {
 func (g *Game) DefineParams() {
 	g.fruitsImg = LoadImgs(PATH_F)
 	g.bombImg = LoadImgs(PATH_B)
-	g.amount = 10
+	g.amount = 4
 	g.fruits = make([]*FlyingObj, g.amount)
 	g.count = 0
 
@@ -88,8 +96,10 @@ func (g *Game) DefineParams() {
 		image: g.bombImg[0],
 		v0:    float64(rand.Intn(4) + 1),
 		hMax:  float64(rand.Intn(HEIGHT-200) + 100),
+		theta: 20.0 * (math.Pi / 180),
 		state: "up",
 	}
+	g.bombs.DefineConsts()
 }
 
 func (g *Game) Update() {
@@ -132,7 +142,9 @@ func (g *Game) CreateFruit() *FlyingObj {
 		image: g.fruitsImg[randomIdx],
 		v0:    float64(rand.Intn(4) + 1),
 		hMax:  float64(rand.Intn(HEIGHT-200) + 100),
+		theta: 20.0 * (math.Pi / 180),
 		state: "up",
 	}
+	fruit.DefineConsts()
 	return fruit
 }
