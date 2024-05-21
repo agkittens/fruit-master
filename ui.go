@@ -3,12 +3,11 @@ package main
 import (
 	"bytes"
 	"image/color"
-	"log"
 
 	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type Button struct {
@@ -22,7 +21,6 @@ func (b *Button) Update() {
 		posX, posY := ebiten.CursorPosition()
 
 		if (posX >= b.x && posX <= b.x+b.width) && (posY >= b.y && posY <= b.y+b.height) {
-			log.Println("Button clicked!")
 			b.onClick()
 		}
 	}
@@ -31,7 +29,7 @@ func (b *Button) Update() {
 func (b *Button) Draw(screen *ebiten.Image) {
 
 	color := color.RGBA{R: R, G: G, B: B, A: 255}
-	ebitenutil.DrawRect(screen, float64(b.x), float64(b.y), float64(b.width), float64(b.height), color)
+	vector.DrawFilledRect(screen, float32(b.x), float32(b.y), float32(b.width), float32(b.height), color, true)
 
 	textX := b.x + (b.width-12*len(b.text))/2
 	textY := b.y + (b.height-30)/2
@@ -39,6 +37,19 @@ func (b *Button) Draw(screen *ebiten.Image) {
 }
 
 type Particles struct {
+	x, y      float32
+	alpha     float32
+	fadeSpeed float32
+	active    bool
+}
+
+func (p *Particles) Fade() {
+	if p.active {
+		p.alpha -= p.fadeSpeed
+		if p.alpha <= 0 {
+			p.active = false
+		}
+	}
 }
 
 func DisplayText(x, y, size int, msg string, screen *ebiten.Image) {

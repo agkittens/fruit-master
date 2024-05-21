@@ -17,7 +17,7 @@ type Window struct {
 }
 
 func (w *Window) Init() {
-	w.gameplay = &Game{}
+	w.gameplay = &Game{amount: 4, count: 0, hearts: 3}
 	w.gameplay.DefineParams()
 
 	w.background, _, _ = ebitenutil.NewImageFromFile(BG)

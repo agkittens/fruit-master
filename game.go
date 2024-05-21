@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image/color"
 	_ "image/png"
 	"log"
 	"math"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type FlyingObj struct {
@@ -83,15 +85,6 @@ func (f *FlyingObj) CheckPos() bool {
 
 }
 
-func (f *FlyingObj) SpawnChronically() {
-	f.x = rand.Intn(WIDTH-100) + 10
-	f.y = rand.Intn(200) + HEIGHT
-	f.v0 = float64(rand.Intn(6) + 1)
-	f.hMax = float64(rand.Intn(HEIGHT-200) + 100)
-	f.state = "up"
-
-}
-
 type Game struct {
 	fruits        []*FlyingObj
 	fruitsImg     []*ebiten.Image
@@ -102,35 +95,32 @@ type Game struct {
 	count         int
 	hearts        int
 	lastSpawnTime time.Time
+	particles     []*Particles
 }
 
 func (g *Game) DefineParams() {
 	g.fruitsImg = LoadImgs(PATH_F)
 	g.bombImg = LoadImgs(PATH_B)
 	g.icon = g.fruitsImg[39]
-	g.amount = 4
-	g.count = 0
-	g.hearts = 3
+
 	g.fruits = make([]*FlyingObj, g.amount)
-
 	for i := 0; i < g.amount; i++ {
-		g.fruits[i] = g.CreateFruit()
+		g.fruits[i] = g.CreateFlyingObj("fruit", g.fruitsImg)
 	}
 
-	g.bombs = &FlyingObj{
-		x:     rand.Intn(WIDTH-100) + 10,
-		y:     HEIGHT + 10,
-		image: g.bombImg[0],
-		v0:    float64(rand.Intn(6) + 1),
-		hMax:  float64(rand.Intn(HEIGHT-200) + 100),
-		theta: 20.0 * (math.Pi / 180),
-		state: "up",
-	}
-	g.bombs.DefineConsts()
+	g.bombs = g.CreateFlyingObj("bomb", g.bombImg)
 	g.lastSpawnTime = time.Now()
 }
 
 func (g *Game) Update() {
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		g.CreateParticle()
+	}
+
+	for i := 0; i < len(g.particles); i++ {
+		g.particles[i].Fade()
+	}
+
 	for i := 0; i < len(g.fruits); i++ {
 		fruit := g.fruits[i]
 		fruit.Move()
@@ -138,9 +128,9 @@ func (g *Game) Update() {
 		isSmashedF := fruit.SmashObj()
 		if isSmashedF || isFallenF {
 			g.fruits = append(g.fruits[:i], g.fruits[i+1:]...)
-			g.fruits = append(g.fruits, g.CreateFruit())
+			g.fruits = append(g.fruits, g.CreateFlyingObj("fruit", g.fruitsImg))
 			if isSmashedF {
-				g.count += 1
+				g.count++
 			}
 		}
 	}
@@ -148,44 +138,70 @@ func (g *Game) Update() {
 	isFallenB := g.bombs.CheckPos()
 	isSmashedB := g.bombs.SmashObj()
 	if isFallenB && time.Since(g.lastSpawnTime) >= 20*time.Second {
-		g.bombs.SpawnChronically()
+		g.bombs = g.CreateFlyingObj("bomb", g.bombImg)
 		g.lastSpawnTime = time.Now()
 	}
 	if isSmashedB {
 		g.count = 0
-		// g.hearts -= 1
-	}
-
-	if g.hearts <= 0 {
-		log.Print("you lost")
+		g.hearts--
+		if g.hearts <= 0 {
+			log.Print("you lost")
+			currentState = StateMenu
+		}
 	}
 
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	for i := 1; i < len(g.particles); i++ {
+		if g.particles[i].active {
+			prev := g.particles[i-1]
+			curr := g.particles[i]
+			vector.StrokeLine(screen, prev.x, prev.y, curr.x, curr.y, 7, color.RGBA{255, 255, 255, 1}, true)
+		}
+	}
 	for _, fruit := range g.fruits {
 		op := ChangePos(fruit.x, fruit.y)
 		screen.DrawImage(fruit.image, op)
 	}
+
 	op := ChangePos(g.bombs.x, g.bombs.y)
 	screen.DrawImage(g.bombs.image, op)
-	op = ChangePos(10, 10)
 
+	op = ChangePos(10, 10)
 	screen.DrawImage(g.icon, op)
 	DisplayText(100, 25, 42, strconv.Itoa(g.count), screen)
 }
 
-func (g *Game) CreateFruit() *FlyingObj {
-	randomIdx := rand.Intn(30)
-	fruit := &FlyingObj{
+func (g *Game) CreateFlyingObj(obj string, arr []*ebiten.Image) *FlyingObj {
+	randomIdx := 0
+	vel := 6
+
+	if obj == "fruit" {
+		randomIdx = rand.Intn(30)
+		vel = 4
+	}
+
+	object := &FlyingObj{
 		x:     rand.Intn(WIDTH-100) + 10,
 		y:     HEIGHT + 10,
-		image: g.fruitsImg[randomIdx],
-		v0:    float64(rand.Intn(4) + 1),
+		image: arr[randomIdx],
+		v0:    float64(rand.Intn(vel) + 1),
 		hMax:  float64(rand.Intn(HEIGHT-200) + 100),
 		theta: 20.0 * (math.Pi / 180),
 		state: "up",
 	}
-	fruit.DefineConsts()
-	return fruit
+	object.DefineConsts()
+	return object
+}
+
+func (g *Game) CreateParticle() {
+	x, y := ebiten.CursorPosition()
+	g.particles = append(g.particles,
+		&Particles{
+			x:         float32(x),
+			y:         float32(y),
+			alpha:     1.0,
+			fadeSpeed: 0.1,
+			active:    true})
 }
