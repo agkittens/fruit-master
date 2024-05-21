@@ -2,9 +2,11 @@ package main
 
 import (
 	_ "image/png"
+	"log"
 	"math"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -64,7 +66,7 @@ func (f *FlyingObj) AdjustSlowFactor() {
 	}
 }
 
-func (f *FlyingObj) Movement() {
+func (f *FlyingObj) Move() {
 	switch f.state {
 	case "up":
 		f.MoveUp()
@@ -81,21 +83,35 @@ func (f *FlyingObj) CheckPos() bool {
 
 }
 
+func (f *FlyingObj) SpawnChronically() {
+	f.x = rand.Intn(WIDTH-100) + 10
+	f.y = rand.Intn(200) + HEIGHT
+	f.v0 = float64(rand.Intn(6) + 1)
+	f.hMax = float64(rand.Intn(HEIGHT-200) + 100)
+	f.state = "up"
+
+}
+
 type Game struct {
-	fruits    []*FlyingObj
-	fruitsImg []*ebiten.Image
-	bombs     *FlyingObj
-	bombImg   []*ebiten.Image
-	amount    int
-	count     int
+	fruits        []*FlyingObj
+	fruitsImg     []*ebiten.Image
+	icon          *ebiten.Image
+	bombs         *FlyingObj
+	bombImg       []*ebiten.Image
+	amount        int
+	count         int
+	hearts        int
+	lastSpawnTime time.Time
 }
 
 func (g *Game) DefineParams() {
 	g.fruitsImg = LoadImgs(PATH_F)
 	g.bombImg = LoadImgs(PATH_B)
+	g.icon = g.fruitsImg[39]
 	g.amount = 4
-	g.fruits = make([]*FlyingObj, g.amount)
 	g.count = 0
+	g.hearts = 3
+	g.fruits = make([]*FlyingObj, g.amount)
 
 	for i := 0; i < g.amount; i++ {
 		g.fruits[i] = g.CreateFruit()
@@ -105,31 +121,43 @@ func (g *Game) DefineParams() {
 		x:     rand.Intn(WIDTH-100) + 10,
 		y:     HEIGHT + 10,
 		image: g.bombImg[0],
-		v0:    float64(rand.Intn(4) + 1),
+		v0:    float64(rand.Intn(6) + 1),
 		hMax:  float64(rand.Intn(HEIGHT-200) + 100),
 		theta: 20.0 * (math.Pi / 180),
 		state: "up",
 	}
 	g.bombs.DefineConsts()
+	g.lastSpawnTime = time.Now()
 }
 
 func (g *Game) Update() {
 	for i := 0; i < len(g.fruits); i++ {
 		fruit := g.fruits[i]
-		fruit.Movement()
-		isFallen := fruit.CheckPos()
-		isSmashed := fruit.SmashObj()
-		if isSmashed || isFallen {
+		fruit.Move()
+		isFallenF := fruit.CheckPos()
+		isSmashedF := fruit.SmashObj()
+		if isSmashedF || isFallenF {
 			g.fruits = append(g.fruits[:i], g.fruits[i+1:]...)
 			g.fruits = append(g.fruits, g.CreateFruit())
-			if isSmashed {
+			if isSmashedF {
 				g.count += 1
 			}
 		}
 	}
-	g.bombs.Movement()
-	if g.bombs.SmashObj() {
+	g.bombs.Move()
+	isFallenB := g.bombs.CheckPos()
+	isSmashedB := g.bombs.SmashObj()
+	if isFallenB && time.Since(g.lastSpawnTime) >= 20*time.Second {
+		g.bombs.SpawnChronically()
+		g.lastSpawnTime = time.Now()
+	}
+	if isSmashedB {
 		g.count = 0
+		// g.hearts -= 1
+	}
+
+	if g.hearts <= 0 {
+		log.Print("you lost")
 	}
 
 }
@@ -141,9 +169,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	op := ChangePos(g.bombs.x, g.bombs.y)
 	screen.DrawImage(g.bombs.image, op)
-	op = ChangePos(-10, -10)
-	screen.DrawImage(g.fruitsImg[31], op)
-	DisplayText(110, 30, 42, strconv.Itoa(g.count), screen)
+	op = ChangePos(10, 10)
+
+	screen.DrawImage(g.icon, op)
+	DisplayText(100, 25, 42, strconv.Itoa(g.count), screen)
 }
 
 func (g *Game) CreateFruit() *FlyingObj {

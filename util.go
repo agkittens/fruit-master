@@ -32,11 +32,20 @@ func LoadImgs(path string) []*ebiten.Image {
 			filePath := filepath.Join(path, file.Name())
 			openedFile, _ := os.Open(filePath)
 			img, _, _ := image.Decode(openedFile)
-			resizedImg := resize.Resize(128, 128, img, resize.Lanczos3)
-			ebitenImg := ebiten.NewImageFromImage(resizedImg)
+			w, h := 128, 128
+			if file.Name() == "T_fruit_40.png" {
+				w, h = 80, 80
+			}
+			ebitenImg := ResizeImg(img, uint(w), uint(h))
 
 			images = append(images, ebitenImg)
 		}
 	}
 	return images
+}
+
+func ResizeImg(img image.Image, w, h uint) *ebiten.Image {
+	resizedImg := resize.Resize(w, h, img, resize.Lanczos3)
+	ebitenImg := ebiten.NewImageFromImage(resizedImg)
+	return ebitenImg
 }

@@ -38,6 +38,9 @@ func (b *Button) Draw(screen *ebiten.Image) {
 	DisplayText(textX, textY, 24, b.text, screen)
 }
 
+type Particles struct {
+}
+
 func DisplayText(x, y, size int, msg string, screen *ebiten.Image) {
 	mplusFaceSource, _ := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
 	op := &text.DrawOptions{}
