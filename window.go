@@ -17,8 +17,6 @@ type Window struct {
 }
 
 func (w *Window) Init() {
-	w.gameplay = &Game{amount: 4, count: 0, hearts: 3}
-	w.gameplay.DefineParams()
 
 	w.background, _, _ = ebitenutil.NewImageFromFile(BG)
 	w.title, _, _ = ebitenutil.NewImageFromFile(TITLE)
@@ -32,6 +30,8 @@ func (w *Window) Init() {
 		onClick: func() {
 			currentState = StateGame
 			w.background, _, _ = ebitenutil.NewImageFromFile(GAME)
+			w.gameplay = &Game{amount: 1, count: 0, hearts: 3}
+			w.gameplay.DefineParams()
 		},
 	}
 

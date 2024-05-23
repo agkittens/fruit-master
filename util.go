@@ -33,9 +33,10 @@ func LoadImgs(path string) []*ebiten.Image {
 			openedFile, _ := os.Open(filePath)
 			img, _, _ := image.Decode(openedFile)
 			w, h := 128, 128
-			if file.Name() == "T_fruit_40.png" {
+			if file.Name() == "T_fruit_40.png" || file.Name() == "skull.png" {
 				w, h = 80, 80
 			}
+
 			ebitenImg := ResizeImg(img, uint(w), uint(h))
 
 			images = append(images, ebitenImg)

@@ -6,6 +6,7 @@ const TPS = 60
 const BG = "assets/bg.png"
 const GAME = "assets/bg2.png"
 const TITLE = "assets/title.png"
+const BUTTON = "assets/5.png"
 
 // button color
 const R, G, B = 33, 82, 117

@@ -95,6 +95,7 @@ type Game struct {
 	count         int
 	hearts        int
 	lastSpawnTime time.Time
+	intensityTime time.Time
 	particles     []*Particles
 }
 
@@ -110,6 +111,7 @@ func (g *Game) DefineParams() {
 
 	g.bombs = g.CreateFlyingObj("bomb", g.bombImg)
 	g.lastSpawnTime = time.Now()
+	g.intensityTime = time.Now()
 }
 
 func (g *Game) Update() {
@@ -121,6 +123,7 @@ func (g *Game) Update() {
 		g.particles[i].Fade()
 	}
 
+	g.ManageIntensity()
 	for i := 0; i < len(g.fruits); i++ {
 		fruit := g.fruits[i]
 		fruit.Move()
@@ -132,6 +135,7 @@ func (g *Game) Update() {
 			if isSmashedF {
 				g.count++
 			}
+
 		}
 	}
 	g.bombs.Move()
@@ -142,12 +146,14 @@ func (g *Game) Update() {
 		g.lastSpawnTime = time.Now()
 	}
 	if isSmashedB {
+		g.bombs = g.CreateFlyingObj("bomb", g.bombImg)
 		g.count = 0
 		g.hearts--
-		if g.hearts <= 0 {
-			log.Print("you lost")
-			currentState = StateMenu
-		}
+	}
+
+	if g.hearts <= 0 {
+		log.Print("you lost")
+		currentState = StateMenu
 	}
 
 }
@@ -171,6 +177,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op = ChangePos(10, 10)
 	screen.DrawImage(g.icon, op)
 	DisplayText(100, 25, 42, strconv.Itoa(g.count), screen)
+	DisplayText(WIDTH-150, 25, 36, ("HP:" + strconv.Itoa(g.hearts)), screen)
 }
 
 func (g *Game) CreateFlyingObj(obj string, arr []*ebiten.Image) *FlyingObj {
@@ -183,7 +190,7 @@ func (g *Game) CreateFlyingObj(obj string, arr []*ebiten.Image) *FlyingObj {
 	}
 
 	object := &FlyingObj{
-		x:     rand.Intn(WIDTH-100) + 10,
+		x:     rand.Intn(WIDTH-100) + 100,
 		y:     HEIGHT + 10,
 		image: arr[randomIdx],
 		v0:    float64(rand.Intn(vel) + 1),
@@ -204,4 +211,15 @@ func (g *Game) CreateParticle() {
 			alpha:     1.0,
 			fadeSpeed: 0.1,
 			active:    true})
+}
+
+func (g *Game) ManageIntensity() {
+	if time.Since(g.intensityTime) >= 10*time.Second {
+		if g.amount < 5 {
+			g.amount++
+
+			g.fruits = append(g.fruits, g.CreateFlyingObj("fruit", g.fruitsImg))
+		}
+		g.intensityTime = time.Now()
+	}
 }
