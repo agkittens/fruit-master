@@ -3,7 +3,6 @@ package main
 import (
 	"image/color"
 	_ "image/png"
-	"log"
 	"math"
 	"math/rand"
 	"strconv"
@@ -13,76 +12,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
-type FlyingObj struct {
-	x, y            int
-	image           *ebiten.Image
-	v0, hMax, theta float64
-	state           string
-	sX, sY          float64
-	slowFactor      float64
-}
-
-func (f *FlyingObj) DefineConsts() {
-	side := 1.0
-	if rand.Intn(2) == 0 {
-		side = -1.0
-	}
-	f.sX = side * f.v0 * math.Cos(f.theta)
-	f.sY = math.Sqrt(f.hMax+float64(f.y))/3 + f.v0*math.Sin(f.theta)
-}
-func (f *FlyingObj) MoveUp() {
-	f.AdjustSlowFactor()
-
-	f.x -= int(f.sX)
-	f.y -= int((f.sY)*(f.slowFactor) + float64(f.y/100))
-
-	if f.y <= int(f.hMax) {
-		f.state = "down"
-	}
-}
-
-func (f *FlyingObj) MoveDown() {
-	f.AdjustSlowFactor()
-
-	f.x -= int(f.sX)
-	f.y += int((f.sY)*(f.slowFactor) + float64(f.y/100))
-}
-
-func (f *FlyingObj) SmashObj() bool {
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-		posX, posY := ebiten.CursorPosition()
-
-		if (posX >= f.x && posX <= f.x+f.image.Bounds().Dx()) && (posY >= f.y && posY <= f.y+f.image.Bounds().Dy()) {
-			return true
-		}
-	}
-	return false
-}
-
-func (f *FlyingObj) AdjustSlowFactor() {
-	f.slowFactor = float64(f.y)/float64(f.hMax) - 1.0
-	if f.slowFactor < 0.01 {
-		f.slowFactor = 0.01
-	} else if f.slowFactor > 0.99 {
-		f.slowFactor = 0.99
-	}
-}
-
-func (f *FlyingObj) Move() {
-	switch f.state {
-	case "up":
-		f.MoveUp()
-	case "down":
-		f.MoveDown()
-	}
-}
-
-func (f *FlyingObj) CheckPos() bool {
-	if f.y >= (HEIGHT+10) && f.state == "down" {
-		return true
-	}
-	return false
-
+type GameData struct {
+	Count  int    `json:"count"`
+	Player string `json:"player"`
 }
 
 type Game struct {
@@ -96,7 +28,9 @@ type Game struct {
 	hearts        int
 	lastSpawnTime time.Time
 	intensityTime time.Time
+	gameOverTime  time.Time
 	particles     []*Particles
+	gameOver      bool
 }
 
 func (g *Game) DefineParams() {
@@ -112,9 +46,26 @@ func (g *Game) DefineParams() {
 	g.bombs = g.CreateFlyingObj("bomb", g.bombImg)
 	g.lastSpawnTime = time.Now()
 	g.intensityTime = time.Now()
+	g.gameOver = false
 }
 
 func (g *Game) Update() {
+	if g.hearts <= 0 {
+		if !g.gameOver {
+			g.gameOver = true
+			g.gameOverTime = time.Now()
+			gameData := &GameData{
+				Count:  g.count,
+				Player: "player1",
+			}
+			SaveGameData("data.json", gameData)
+		}
+		if time.Since(g.gameOverTime) >= 4*time.Second {
+			currentState = StateScore
+		}
+		return
+	}
+
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		g.CreateParticle()
 	}
@@ -147,18 +98,19 @@ func (g *Game) Update() {
 	}
 	if isSmashedB {
 		g.bombs = g.CreateFlyingObj("bomb", g.bombImg)
-		g.count = 0
 		g.hearts--
-	}
-
-	if g.hearts <= 0 {
-		log.Print("you lost")
-		currentState = StateMenu
+		if g.hearts > 0 {
+			g.count = 0
+		}
 	}
 
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	if g.hearts <= 0 {
+		DisplayText(WIDTH/2-100, HEIGHT/3, 52, "You lost", screen, color.Black)
+	}
+
 	for i := 1; i < len(g.particles); i++ {
 		if g.particles[i].active {
 			prev := g.particles[i-1]
@@ -176,8 +128,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	op = ChangePos(10, 10)
 	screen.DrawImage(g.icon, op)
-	DisplayText(100, 25, 42, strconv.Itoa(g.count), screen)
-	DisplayText(WIDTH-150, 25, 36, ("HP:" + strconv.Itoa(g.hearts)), screen)
+	DisplayText(100, 25, 42, strconv.Itoa(g.count), screen, color.White)
+	DisplayText(WIDTH-150, 25, 36, ("HP:" + strconv.Itoa(g.hearts)), screen, color.White)
 }
 
 func (g *Game) CreateFlyingObj(obj string, arr []*ebiten.Image) *FlyingObj {

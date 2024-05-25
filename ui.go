@@ -6,12 +6,13 @@ import (
 
 	"github.com/hajimehoshi/ebiten/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 type Button struct {
 	x, y, width, height int
+	scaleX, scaleY      float64
 	text                string
 	onClick             func()
 }
@@ -27,13 +28,17 @@ func (b *Button) Update() {
 }
 
 func (b *Button) Draw(screen *ebiten.Image) {
-
-	color := color.RGBA{R: R, G: G, B: B, A: 255}
-	vector.DrawFilledRect(screen, float32(b.x), float32(b.y), float32(b.width), float32(b.height), color, true)
+	img, _, _ := ebitenutil.NewImageFromFile(BUTTON)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(b.scaleX, b.scaleY)
+	op.GeoM.Translate(float64(b.x), float64(b.y))
+	screen.DrawImage(img, op)
+	// col := color.RGBA{R: R, G: G, B: B, A: 255}
+	// vector.DrawFilledRect(screen, float32(b.x), float32(b.y), float32(b.width), float32(b.height), col, true)
 
 	textX := b.x + (b.width-12*len(b.text))/2
 	textY := b.y + (b.height-30)/2
-	DisplayText(textX, textY, 24, b.text, screen)
+	DisplayText(textX, textY, 24, b.text, screen, color.White)
 }
 
 type Particles struct {
@@ -52,11 +57,11 @@ func (p *Particles) Fade() {
 	}
 }
 
-func DisplayText(x, y, size int, msg string, screen *ebiten.Image) {
+func DisplayText(x, y, size int, msg string, screen *ebiten.Image, color color.Color) {
 	mplusFaceSource, _ := text.NewGoTextFaceSource(bytes.NewReader(fonts.MPlus1pRegular_ttf))
 	op := &text.DrawOptions{}
 	op.GeoM.Translate(float64(x), float64(y))
-	op.ColorScale.ScaleWithColor(color.White)
+	op.ColorScale.ScaleWithColor(color)
 
 	text.Draw(screen, msg, &text.GoTextFace{
 		Source: mplusFaceSource,

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"image/color"
 	_ "image/png"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -11,9 +13,11 @@ var currentState int
 
 type Window struct {
 	background *ebiten.Image
+	scoreboard *ebiten.Image
 	title      *ebiten.Image
 	gameplay   *Game
-	buttons    []*Button
+
+	buttons []*Button
 }
 
 func (w *Window) Init() {
@@ -22,24 +26,29 @@ func (w *Window) Init() {
 	w.title, _, _ = ebitenutil.NewImageFromFile(TITLE)
 
 	buttonStart := &Button{
-		x:      (WIDTH - 200) / 2,
+		x:      (WIDTH-200)/2 + 10,
 		y:      (HEIGHT + 150) / 2,
-		width:  200,
+		width:  172,
 		height: 50,
+		scaleX: 1,
+		scaleY: 1,
 		text:   "start",
 		onClick: func() {
 			currentState = StateGame
 			w.background, _, _ = ebitenutil.NewImageFromFile(GAME)
-			w.gameplay = &Game{amount: 1, count: 0, hearts: 3}
+			w.scoreboard, _, _ = ebitenutil.NewImageFromFile(SCOREBOARD)
+			w.gameplay = &Game{amount: 1, count: 0, hearts: 1}
 			w.gameplay.DefineParams()
 		},
 	}
 
 	buttonExit := &Button{
-		x:      (WIDTH - 200) / 2,
+		x:      (WIDTH-200)/2 + 10,
 		y:      (HEIGHT + 300) / 2,
-		width:  200,
+		width:  172,
 		height: 50,
+		scaleX: 1,
+		scaleY: 1,
 		text:   "exit",
 		onClick: func() {
 			currentState = StateExit
@@ -51,6 +60,8 @@ func (w *Window) Init() {
 		y:      20,
 		width:  30,
 		height: 30,
+		scaleX: 0.2,
+		scaleY: 0.55,
 		text:   "X",
 		onClick: func() {
 			currentState = StateMenu
@@ -70,6 +81,8 @@ func (w *Window) Update() error {
 	case StateGame:
 		w.buttons[2].Update()
 		w.gameplay.Update()
+	case StateScore:
+		w.buttons[2].Update()
 	case StateExit:
 		return ebiten.Termination
 	}
@@ -91,6 +104,17 @@ func (w *Window) Draw(screen *ebiten.Image) {
 		screen.DrawImage(w.background, opBG)
 		w.buttons[2].Draw(screen)
 		w.gameplay.Draw(screen)
+
+	case StateScore:
+		data, _ := LoadGameData("data.json")
+		opBG := AdjustSize(w.background, 2, 2)
+		screen.DrawImage(w.scoreboard, opBG)
+		w.buttons[2].Draw(screen)
+		if data != nil {
+			DisplayText(WIDTH/2-100, HEIGHT/2-100, 36, fmt.Sprintf("Score: %d", data.Count), screen, color.Black)
+			DisplayText(WIDTH/2-100, HEIGHT/2+100, 36, fmt.Sprintf("Player: %s", data.Player), screen, color.Black)
+		}
+
 	}
 
 }
