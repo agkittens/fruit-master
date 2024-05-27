@@ -28,14 +28,7 @@ func (b *Button) Update() {
 }
 
 func (b *Button) Draw(screen *ebiten.Image) {
-	img, _, _ := ebitenutil.NewImageFromFile(BUTTON)
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Scale(b.scaleX, b.scaleY)
-	op.GeoM.Translate(float64(b.x), float64(b.y))
-	screen.DrawImage(img, op)
-	// col := color.RGBA{R: R, G: G, B: B, A: 255}
-	// vector.DrawFilledRect(screen, float32(b.x), float32(b.y), float32(b.width), float32(b.height), col, true)
-
+	CreateRect(b.x, b.y, b.scaleX, b.scaleY, screen)
 	textX := b.x + (b.width-12*len(b.text))/2
 	textY := b.y + (b.height-30)/2
 	DisplayText(textX, textY, 24, b.text, screen, color.White)
@@ -67,4 +60,27 @@ func DisplayText(x, y, size int, msg string, screen *ebiten.Image, color color.C
 		Source: mplusFaceSource,
 		Size:   float64(size),
 	}, op)
+}
+
+func CreateRect(x, y int, scaleX, scaleY float64, screen *ebiten.Image) {
+	img, _, _ := ebitenutil.NewImageFromFile(BUTTON)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Scale(scaleX, scaleY)
+	op.GeoM.Translate(float64(x), float64(y))
+	screen.DrawImage(img, op)
+}
+
+func AdjustSize(img *ebiten.Image, divX int, divY int) *ebiten.DrawImageOptions {
+	size := img.Bounds().Size()
+	posX := (WIDTH - size.X) / divX
+	posY := (HEIGHT - size.Y) / divY
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(posX), float64(posY))
+	return op
+}
+
+func ChangePos(posX, posY int) *ebiten.DrawImageOptions {
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(posX), float64(posY))
+	return op
 }

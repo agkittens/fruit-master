@@ -7,23 +7,10 @@ import (
 	"path/filepath"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/audio"
+	"github.com/hajimehoshi/ebiten/v2/audio/mp3"
 	"github.com/nfnt/resize"
 )
-
-func AdjustSize(img *ebiten.Image, divX int, divY int) *ebiten.DrawImageOptions {
-	size := img.Bounds().Size()
-	posX := (WIDTH - size.X) / divX
-	posY := (HEIGHT - size.Y) / divY
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(posX), float64(posY))
-	return op
-}
-
-func ChangePos(posX, posY int) *ebiten.DrawImageOptions {
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(posX), float64(posY))
-	return op
-}
 
 func LoadImgs(path string) []*ebiten.Image {
 	files, _ := os.ReadDir(path)
@@ -77,4 +64,16 @@ func LoadGameData(filename string) (*GameData, error) {
 		return nil, err
 	}
 	return &data, nil
+}
+
+func InitAudio() *audio.Player {
+	audioContext := audio.NewContext(sample)
+
+	file, _ := os.Open("assets/music2.mp3")
+
+	audioStream, _ := mp3.DecodeWithSampleRate(sample, file)
+	infiniteLoop := audio.NewInfiniteLoop(audioStream, audioStream.Length())
+	player, _ := audioContext.NewPlayer(infiniteLoop)
+
+	return player
 }

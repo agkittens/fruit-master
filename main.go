@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	_ "image/png"
 	"log"
 

@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 // window consts
 const WIDTH, HEIGHT = 1000, 750
 const TPS = 60
@@ -11,6 +13,11 @@ const BUTTON = "assets/button.png"
 
 // button color
 const R, G, B = 33, 82, 117
+
+// music
+const sample = 48000
+const playDuration = 5 * time.Second
+const pauseDuration = 15 * time.Second
 
 // button states
 const (

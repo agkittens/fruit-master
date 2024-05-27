@@ -4,20 +4,24 @@ import (
 	"fmt"
 	"image/color"
 	_ "image/png"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 var currentState int
 
 type Window struct {
-	background *ebiten.Image
-	scoreboard *ebiten.Image
-	title      *ebiten.Image
-	gameplay   *Game
-
-	buttons []*Button
+	background  *ebiten.Image
+	scoreboard  *ebiten.Image
+	title       *ebiten.Image
+	gameplay    *Game
+	playTicker  *time.Ticker
+	pauseTicker *time.Ticker
+	player      *audio.Player
+	buttons     []*Button
 }
 
 func (w *Window) Init() {
@@ -37,8 +41,9 @@ func (w *Window) Init() {
 			currentState = StateGame
 			w.background, _, _ = ebitenutil.NewImageFromFile(GAME)
 			w.scoreboard, _, _ = ebitenutil.NewImageFromFile(SCOREBOARD)
-			w.gameplay = &Game{amount: 1, count: 0, hearts: 1}
+			w.gameplay = &Game{amount: 1, count: 0, hearts: 3, isMusic: false}
 			w.gameplay.DefineParams()
+			w.PlayAudio()
 		},
 	}
 
@@ -71,6 +76,10 @@ func (w *Window) Init() {
 
 	w.buttons = []*Button{buttonStart, buttonExit, buttonX}
 
+	w.playTicker = time.NewTicker(playDuration)
+	w.pauseTicker = time.NewTicker(pauseDuration)
+	w.player = InitAudio()
+	go w.SetSchedule()
 }
 
 func (w *Window) Update() error {
@@ -109,10 +118,12 @@ func (w *Window) Draw(screen *ebiten.Image) {
 		data, _ := LoadGameData("data.json")
 		opBG := AdjustSize(w.background, 2, 2)
 		screen.DrawImage(w.scoreboard, opBG)
+
 		w.buttons[2].Draw(screen)
+		CreateRect((WIDTH-172*3)/2, HEIGHT/2-100, 3, 5, screen)
 		if data != nil {
-			DisplayText(WIDTH/2-100, HEIGHT/2-100, 36, fmt.Sprintf("Score: %d", data.Count), screen, color.Black)
-			DisplayText(WIDTH/2-100, HEIGHT/2+100, 36, fmt.Sprintf("Player: %s", data.Player), screen, color.Black)
+			DisplayText(WIDTH/2-100, HEIGHT/2-100, 36, fmt.Sprintf("Score: %d", data.Count), screen, color.White)
+			DisplayText(WIDTH/2-100, HEIGHT/2-50, 36, fmt.Sprintf("Player: %s", data.Player), screen, color.White)
 		}
 
 	}
@@ -121,4 +132,31 @@ func (w *Window) Draw(screen *ebiten.Image) {
 
 func (w *Window) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return WIDTH, HEIGHT
+}
+
+func (w *Window) PlayAudio() {
+	if !w.gameplay.isMusic {
+		w.player.Play()
+		w.gameplay.isMusic = true
+		w.pauseTicker.Reset(pauseDuration)
+		w.playTicker.Stop()
+	}
+}
+func (w *Window) PauseAudio() {
+	if w.gameplay.isMusic {
+		w.player.Pause()
+		w.gameplay.isMusic = false
+		w.playTicker.Reset(playDuration)
+		w.pauseTicker.Stop()
+	}
+}
+func (w *Window) SetSchedule() {
+	for {
+		select {
+		case <-w.pauseTicker.C:
+			w.PauseAudio()
+		case <-w.playTicker.C:
+			w.PlayAudio()
+		}
+	}
 }

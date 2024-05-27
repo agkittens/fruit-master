@@ -31,6 +31,7 @@ type Game struct {
 	gameOverTime  time.Time
 	particles     []*Particles
 	gameOver      bool
+	isMusic       bool
 }
 
 func (g *Game) DefineParams() {
@@ -83,8 +84,10 @@ func (g *Game) Update() {
 		if isSmashedF || isFallenF {
 			g.fruits = append(g.fruits[:i], g.fruits[i+1:]...)
 			g.fruits = append(g.fruits, g.CreateFlyingObj("fruit", g.fruitsImg))
-			if isSmashedF {
+			if isSmashedF && g.isMusic {
 				g.count++
+			} else if isSmashedF && !g.isMusic {
+				g.count--
 			}
 
 		}
