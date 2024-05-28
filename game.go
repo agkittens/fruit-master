@@ -178,3 +178,11 @@ func (g *Game) ManageIntensity() {
 		g.intensityTime = time.Now()
 	}
 }
+
+func (g *Game) ResetGame() {
+	g.amount = 1
+	g.count = 0
+	g.hearts = 3
+	g.isMusic = false
+	g.DefineParams()
+}

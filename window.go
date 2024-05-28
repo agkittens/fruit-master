@@ -28,6 +28,7 @@ func (w *Window) Init() {
 
 	w.background, _, _ = ebitenutil.NewImageFromFile(BG)
 	w.title, _, _ = ebitenutil.NewImageFromFile(TITLE)
+	w.gameplay = &Game{amount: 1, count: 0, hearts: 3, isMusic: false}
 
 	buttonStart := &Button{
 		x:      (WIDTH-200)/2 + 10,
@@ -41,8 +42,7 @@ func (w *Window) Init() {
 			currentState = StateGame
 			w.background, _, _ = ebitenutil.NewImageFromFile(GAME)
 			w.scoreboard, _, _ = ebitenutil.NewImageFromFile(SCOREBOARD)
-			w.gameplay = &Game{amount: 1, count: 0, hearts: 3, isMusic: false}
-			w.gameplay.DefineParams()
+			w.gameplay.ResetGame()
 			w.PlayAudio()
 		},
 	}

@@ -16,8 +16,8 @@ const R, G, B = 33, 82, 117
 
 // music
 const sample = 48000
-const playDuration = 5 * time.Second
-const pauseDuration = 15 * time.Second
+const playDuration = 3 * time.Second
+const pauseDuration = 7 * time.Second
 
 // button states
 const (

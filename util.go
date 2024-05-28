@@ -74,6 +74,7 @@ func InitAudio() *audio.Player {
 	audioStream, _ := mp3.DecodeWithSampleRate(sample, file)
 	infiniteLoop := audio.NewInfiniteLoop(audioStream, audioStream.Length())
 	player, _ := audioContext.NewPlayer(infiniteLoop)
+	player.SetVolume(0.3)
 
 	return player
 }
