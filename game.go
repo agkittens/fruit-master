@@ -5,7 +5,9 @@ import (
 	_ "image/png"
 	"math"
 	"math/rand"
+	"os/user"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -55,9 +57,12 @@ func (g *Game) Update() {
 		if !g.gameOver {
 			g.gameOver = true
 			g.gameOverTime = time.Now()
+			username, _ := user.Current()
+			parts := strings.Split(username.Username, "\\")
+			username.Username = parts[len(parts)-1]
 			gameData := &GameData{
 				Count:  g.count,
-				Player: "player1",
+				Player: username.Username,
 			}
 			SaveGameData("data.json", gameData)
 		}

@@ -122,8 +122,8 @@ func (w *Window) Draw(screen *ebiten.Image) {
 		w.buttons[2].Draw(screen)
 		CreateRect((WIDTH-172*3)/2, HEIGHT/2-100, 3, 5, screen)
 		if data != nil {
-			DisplayText(WIDTH/2-100, HEIGHT/2-100, 36, fmt.Sprintf("Score: %d", data.Count), screen, color.White)
-			DisplayText(WIDTH/2-100, HEIGHT/2-50, 36, fmt.Sprintf("Player: %s", data.Player), screen, color.White)
+			DisplayText(WIDTH/2-175, HEIGHT/2-25, 32, fmt.Sprintf("Score: %d", data.Count), screen, color.White)
+			DisplayText(WIDTH/2-175, HEIGHT/2+25, 32, fmt.Sprintf("Player: %s", data.Player), screen, color.White)
 		}
 
 	}
