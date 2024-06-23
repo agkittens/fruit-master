@@ -12,3 +12,9 @@ After the game starts, the user must "cut" thrown fruits. The fruits will have s
 ## Run
 To run this project type in console
 ``` go run .```
+
+### assets
+due to no informations about licences i attach links to assets i used
+fruit imgs by: https://lemon-balm.itch.io
+skull img by: https://craftpix.net/freebies/50-free-alchemical-ingredient-icons/
+music by: https://pixabay.com/pl/music/swiat-misora-traditional-japanese-music-03-141356/
