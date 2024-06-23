@@ -25,9 +25,15 @@ type Window struct {
 }
 
 func (w *Window) Init() {
-
-	w.background, _, _ = ebitenutil.NewImageFromFile(BG)
-	w.title, _, _ = ebitenutil.NewImageFromFile(TITLE)
+	var err error
+	w.background, _, err = ebitenutil.NewImageFromFile(BG)
+	if err != nil {
+		panic(err)
+	}
+	w.title, _, err = ebitenutil.NewImageFromFile(TITLE)
+	if err != nil {
+		panic(err)
+	}
 	w.gameplay = &Game{amount: 1, count: 0, hearts: 3, isMusic: false}
 
 	buttonStart := &Button{
@@ -40,8 +46,14 @@ func (w *Window) Init() {
 		text:   "start",
 		onClick: func() {
 			currentState = StateGame
-			w.background, _, _ = ebitenutil.NewImageFromFile(GAME)
-			w.scoreboard, _, _ = ebitenutil.NewImageFromFile(SCOREBOARD)
+			w.background, _, err = ebitenutil.NewImageFromFile(GAME)
+			if err != nil {
+				panic(err)
+			}
+			w.scoreboard, _, err = ebitenutil.NewImageFromFile(SCOREBOARD)
+			if err != nil {
+				panic(err)
+			}
 			w.gameplay.ResetGame()
 			w.PlayAudio()
 		},
@@ -70,7 +82,10 @@ func (w *Window) Init() {
 		text:   "X",
 		onClick: func() {
 			currentState = StateMenu
-			w.background, _, _ = ebitenutil.NewImageFromFile(BG)
+			w.background, _, err = ebitenutil.NewImageFromFile(BG)
+			if err != nil {
+				panic(err)
+			}
 		},
 	}
 

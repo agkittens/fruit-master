@@ -62,12 +62,16 @@ func DisplayText(x, y, size int, msg string, screen *ebiten.Image, color color.C
 	}, op)
 }
 
-func CreateRect(x, y int, scaleX, scaleY float64, screen *ebiten.Image) {
-	img, _, _ := ebitenutil.NewImageFromFile(BUTTON)
+func CreateRect(x, y int, scaleX, scaleY float64, screen *ebiten.Image) error {
+	img, _, err := ebitenutil.NewImageFromFile(BUTTON)
+	if err != nil {
+		return err
+	}
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(scaleX, scaleY)
 	op.GeoM.Translate(float64(x), float64(y))
 	screen.DrawImage(img, op)
+	return nil
 }
 
 func AdjustSize(img *ebiten.Image, divX int, divY int) *ebiten.DrawImageOptions {
